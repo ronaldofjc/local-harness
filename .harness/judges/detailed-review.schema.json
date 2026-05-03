@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["tool", "regulation", "passed", "summary", "inconclusive", "violations"],
+  "properties": {
+    "tool": { "type": "string", "const": "detailed-review" },
+    "regulation": { "type": "string", "const": "behaviour" },
+    "passed": { "type": "boolean" },
+    "summary": { "type": "string" },
+    "inconclusive": { "type": "boolean" },
+    "inconclusiveReason": { "type": "string" },
+    "violations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Violation" }
+    }
+  },
+  "definitions": {
+    "Violation": {
+      "type": "object",
+      "required": ["severity", "what", "why", "remediation", "filesAffected", "linesAffected"],
+      "properties": {
+        "severity": { "type": "string", "enum": ["error", "warning", "info"] },
+        "what": { "type": "string" },
+        "why": { "type": "string" },
+        "remediation": { "type": "string" },
+        "filesAffected": { "type": "array", "items": { "type": "string" } },
+        "linesAffected": { "type": "array", "items": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } } },
+        "guideUri": { "type": "string" }
+      }
+    }
+  }
+}

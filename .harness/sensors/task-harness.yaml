@@ -1,0 +1,8 @@
+id: task-harness
+kind: custom
+regulation: fitness
+command: "task --taskfile harness/Taskfile.yml test"
+adapter: task-harness
+description: "Executa o task de test do harness do workspace."
+defaults:
+  target: "."

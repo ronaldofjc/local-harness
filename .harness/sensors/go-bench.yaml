@@ -1,0 +1,8 @@
+id: go-bench
+kind: custom
+regulation: fitness
+command: "go test -bench=. -benchmem ./..."
+adapter: go-bench
+description: "Executa benchmarks Go e normaliza a saida em SensorOutput, verificando regressoes de performance."
+defaults:
+  target: "."

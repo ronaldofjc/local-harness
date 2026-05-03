@@ -1,0 +1,13 @@
+id: implement-handler
+spec_id: example-feature
+description: Implementar o handler da feature
+status: completed
+evidence:
+    - kind: sensor_run
+      timestamp: 2026-05-01T12:00:00Z
+      sensor: gofmt
+      passed: false
+    - kind: note
+      timestamp: 2026-05-03T13:49:27.575318Z
+      text: Review preparada via judge.review
+completedAt: 2026-05-03T13:49:27.575318Z

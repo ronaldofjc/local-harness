@@ -1,0 +1,8 @@
+id: gofmt
+kind: linter
+regulation: maintainability
+command: "gofmt -l ."
+adapter: gofmt
+description: "Verifica se todos os arquivos Go estao formatados."
+defaults:
+  target: "."

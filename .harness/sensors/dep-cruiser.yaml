@@ -1,0 +1,8 @@
+id: dep-cruiser
+kind: structural
+regulation: fitness
+command: "go vet ./... 2>&1 ; echo '---ARCH---' ; for dir in $(go list ./... 2>/dev/null); do if echo $dir | grep -qE '(handler|controller)'; then deps=$(go list -f '{{join .Imports \" \"}}' $dir 2>/dev/null); for d in $deps; do if echo $d | grep -qE '(repository|repo)'; then echo \"ARCH_VIOLATION: $dir imports $d (handler should depend on service, not repository)\"; fi; done; fi; done"
+adapter: dep-cruiser
+description: "Analisa dependencias Go para violacoes arquiteturais (handler -> repository direto) e roda go vet."
+defaults:
+  target: "."

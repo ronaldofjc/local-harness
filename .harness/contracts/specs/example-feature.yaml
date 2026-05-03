@@ -1,0 +1,17 @@
+id: example-feature
+title: Feature example para teste
+acceptanceCriteria:
+  - O codigo deve compilar sem erros
+  - Os testes devem passar
+checks:
+  - kind: sensor
+    id: go-test
+  - kind: judge
+    rubric: spec-adherence
+tasks:
+  - id: implement-handler
+    description: Implementar o handler da feature
+    acceptanceRefs: [0]
+  - id: add-tests
+    description: Adicionar testes unitarios
+    acceptanceRefs: [1]

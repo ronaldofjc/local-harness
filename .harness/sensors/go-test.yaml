@@ -1,0 +1,8 @@
+id: go-test
+kind: custom
+regulation: maintainability
+command: "go test ./..."
+adapter: go-test
+description: "Executa go test ./... e normaliza a saida em SensorOutput."
+defaults:
+  target: "."

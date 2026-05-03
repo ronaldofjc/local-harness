@@ -1,0 +1,8 @@
+id: govet
+kind: linter
+regulation: maintainability
+command: "go vet ./..."
+adapter: govet
+description: "Executa go vet ./... para detectar construcoes suspeitas."
+defaults:
+  target: "."

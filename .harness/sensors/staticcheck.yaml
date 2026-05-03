@@ -1,0 +1,8 @@
+id: staticcheck
+kind: linter
+regulation: maintainability
+command: "staticcheck ./..."
+adapter: passthrough
+description: "Executa staticcheck e repassa stdout como summary."
+defaults:
+  target: "."

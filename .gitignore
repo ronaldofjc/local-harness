@@ -1,0 +1,6 @@
+.harness/.local/
+/tmp/mcp
+*.exe
+*.test
+*.out
+.DS_Store
