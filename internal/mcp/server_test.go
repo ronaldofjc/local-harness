@@ -15,24 +15,51 @@ import (
 	"github.com/ronaldofjc/local-harness/internal/workflows"
 )
 
-func setupTestServer() *Server {
-	root := "../../examples/.harness"
+func setupTestHarness(t testing.TB) string {
+	t.Helper()
+	src := "../../examples/.harness"
+	dst := t.TempDir()
+	if err := copyHarness(src, dst); err != nil {
+		t.Fatalf("failed to copy harness: %v", err)
+	}
+	return dst
+}
+
+func setupTestServer(t testing.TB) *Server {
+	t.Helper()
+	root := setupTestHarness(t)
 
 	guidesRepo := guides.NewFileSystemRepository(root)
 	_ = guidesRepo.Load()
+	w1, _ := guidesRepo.StartWatcher()
+	if w1 != nil {
+		t.Cleanup(func() { _ = w1.Close() })
+	}
 
 	sensorsRepo := sensors.NewFileSystemRepository(root)
 	_ = sensorsRepo.Load()
+	w2, _ := sensorsRepo.StartWatcher()
+	if w2 != nil {
+		t.Cleanup(func() { _ = w2.Close() })
+	}
 	runner := sensors.NewRunner()
 	sensorsService := sensors.NewService(sensorsRepo, runner)
 
 	judgesRepo := judges.NewFileSystemRepository(root)
 	_ = judgesRepo.Load()
+	w3, _ := judgesRepo.StartWatcher()
+	if w3 != nil {
+		t.Cleanup(func() { _ = w3.Close() })
+	}
 	judgesValidator := judges.NewValidator()
 	judgesService := judges.NewService(judgesRepo, judgesValidator)
 
 	specRepo := contracts.NewFileSystemSpecRepository(root)
 	_ = specRepo.Load()
+	w4, _ := specRepo.StartWatcher()
+	if w4 != nil {
+		t.Cleanup(func() { _ = w4.Close() })
+	}
 	taskRepo := contracts.NewFileSystemTaskRepository(root)
 	_ = taskRepo.Load()
 	contractsService := contracts.NewService(specRepo, taskRepo, sensorsService)
@@ -50,7 +77,7 @@ func setupTestServer() *Server {
 }
 
 func TestHandleInitialize(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(InitializeRequest{
 		ProtocolVersion: "2024-11-05",
@@ -78,7 +105,7 @@ func TestHandleInitialize(t *testing.T) {
 }
 
 func TestHandleMethodNotFound(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 	req := JSONRPCRequest{
 		JSONRPC: "2.0",
 		ID:      2,
@@ -95,7 +122,7 @@ func TestHandleMethodNotFound(t *testing.T) {
 }
 
 func TestHandleToolsList(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 	req := JSONRPCRequest{
 		JSONRPC: "2.0",
 		ID:      3,
@@ -124,7 +151,7 @@ func TestHandleToolsList(t *testing.T) {
 }
 
 func TestHandleJudgeReview(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"name": "judge.review",
@@ -148,7 +175,7 @@ func TestHandleJudgeReview(t *testing.T) {
 }
 
 func TestHandleContractValidate(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"name": "contract.spec.validate",
@@ -172,7 +199,7 @@ func TestHandleContractValidate(t *testing.T) {
 }
 
 func TestHandleContractTaskNext(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"name": "contract.task.next",
@@ -195,7 +222,7 @@ func TestHandleContractTaskNext(t *testing.T) {
 }
 
 func TestHandleSessionStart(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"name": "session.start",
@@ -219,7 +246,7 @@ func TestHandleSessionStart(t *testing.T) {
 }
 
 func TestHandleSessionAppendAndGet(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	// Start
 	startParams, _ := json.Marshal(map[string]any{
@@ -284,7 +311,7 @@ func TestHandleSessionAppendAndGet(t *testing.T) {
 }
 
 func TestHandleSteerSuggest(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"name": "harness.steer.suggest",
@@ -307,7 +334,7 @@ func TestHandleSteerSuggest(t *testing.T) {
 }
 
 func TestHandlePromptsList(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 	req := JSONRPCRequest{
 		JSONRPC: "2.0",
 		ID:      12,
@@ -334,7 +361,7 @@ func TestHandlePromptsList(t *testing.T) {
 }
 
 func TestHandlePromptsGet(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"name": "PREVC",
@@ -354,7 +381,7 @@ func TestHandlePromptsGet(t *testing.T) {
 }
 
 func TestHandleResourcesReadWorkflow(t *testing.T) {
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	params, _ := json.Marshal(map[string]any{
 		"uri": "harness://workflows/PREVC",
@@ -376,7 +403,7 @@ func TestHandleResourcesReadWorkflow(t *testing.T) {
 // TestEndToEnd_Flow simula o ciclo completo de uso do harness:
 // sensor.run -> judge.review -> contract.task.next -> contract.task.complete
 func TestEndToEnd_Flow(t *testing.T) {
-	root := "../../examples/.harness"
+	root := setupTestHarness(t)
 
 	// Limpa tasks de testes anteriores para garantir independencia
 	_ = os.RemoveAll(filepath.Join(root, "contracts", "tasks"))
@@ -395,7 +422,7 @@ func TestEndToEnd_Flow(t *testing.T) {
 		t.Fatalf("go-test sensor not found: %v", err)
 	}
 
-	server := setupTestServer()
+	server := setupTestServer(t)
 
 	// 1. sensor.run - executa gofmt no proprio repo (rapido e deterministico)
 	sensorParams, _ := json.Marshal(map[string]any{

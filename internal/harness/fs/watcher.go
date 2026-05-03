@@ -70,10 +70,18 @@ func (w *Watcher) addRecursive(dir string) error {
 			return nil
 		}
 		if d.IsDir() {
+			if isHiddenDir(path) {
+				return fs.SkipDir
+			}
 			return w.watcher.Add(path)
 		}
 		return nil
 	})
+}
+
+func isHiddenDir(path string) bool {
+	base := filepath.Base(path)
+	return len(base) > 1 && base[0] == '.'
 }
 
 func (w *Watcher) loop() {
@@ -85,12 +93,12 @@ func (w *Watcher) loop() {
 			}
 			var op string
 			switch {
-			case ev.Op&fsnotify.Create == fsnotify.Create:
-				op = "create"
-				// Se for diretorio novo, adiciona ao watcher
-				if info, err := os.Stat(ev.Name); err == nil && info.IsDir() {
-					w.watcher.Add(ev.Name)
-				}
+		case ev.Op&fsnotify.Create == fsnotify.Create:
+			op = "create"
+			// Se for diretorio novo (e nao oculto), adiciona ao watcher
+			if info, err := os.Stat(ev.Name); err == nil && info.IsDir() && !isHiddenDir(ev.Name) {
+				w.watcher.Add(ev.Name)
+			}
 			case ev.Op&fsnotify.Write == fsnotify.Write:
 				op = "write"
 			case ev.Op&fsnotify.Remove == fsnotify.Remove:

@@ -1,2 +1,0 @@
-{"session_id":"28b3ae6b19c4ecb43e668951cd106eec","startedAt":"2026-05-03T16:47:58.391844Z"}
-{"type":"tool_call","timestamp":"2026-05-03T16:47:58.392621Z","payload":{"tool":"sensor.run"}}

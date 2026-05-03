@@ -120,15 +120,15 @@ func (r *FileSystemSpecRepository) Get(id string) (*Spec, error) {
 }
 
 // StartWatcher inicia o watcher para recarregar specs automaticamente.
-func (r *FileSystemSpecRepository) StartWatcher() error {
+func (r *FileSystemSpecRepository) StartWatcher() (*harnessfs.Watcher, error) {
 	w, err := harnessfs.NewWatcher(r.root)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	w.OnEvent(func(ev harnessfs.Event) {
 		if strings.Contains(ev.Path, "/contracts/specs/") {
 			_ = r.Load()
 		}
 	})
-	return nil
+	return w, nil
 }

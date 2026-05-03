@@ -45,14 +45,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to load guides: %v\n", err)
 		os.Exit(1)
 	}
-	_ = guidesRepo.StartWatcher()
+	_, _ = guidesRepo.StartWatcher()
 
 	sensorsRepo := sensors.NewFileSystemRepository(root)
 	if err := sensorsRepo.Load(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load sensors: %v\n", err)
 		os.Exit(1)
 	}
-	_ = sensorsRepo.StartWatcher()
+	_, _ = sensorsRepo.StartWatcher()
 
 	runner := sensors.NewRunner()
 	sensorsService := sensors.NewService(sensorsRepo, runner)
@@ -63,7 +63,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to load judges: %v\n", err)
 		os.Exit(1)
 	}
-	_ = judgesRepo.StartWatcher()
+	_, _ = judgesRepo.StartWatcher()
 	judgesValidator := judges.NewValidator()
 	judgesService := judges.NewService(judgesRepo, judgesValidator)
 
@@ -73,7 +73,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to load specs: %v\n", err)
 		os.Exit(1)
 	}
-	_ = specRepo.StartWatcher()
+	_, _ = specRepo.StartWatcher()
 
 	taskRepo := contracts.NewFileSystemTaskRepository(root)
 	if err := taskRepo.Load(); err != nil {

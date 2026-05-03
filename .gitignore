@@ -1,4 +1,5 @@
 .harness/.local/
+examples/.harness/.local/
 /tmp/mcp
 *.exe
 *.test

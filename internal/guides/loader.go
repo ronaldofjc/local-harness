@@ -111,15 +111,15 @@ func (r *FileSystemRepository) All() ([]Guide, error) {
 }
 
 // StartWatcher inicia o watcher para recarregar guides automaticamente.
-func (r *FileSystemRepository) StartWatcher() error {
+func (r *FileSystemRepository) StartWatcher() (*harnessfs.Watcher, error) {
 	w, err := harnessfs.NewWatcher(r.root)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	w.OnEvent(func(ev harnessfs.Event) {
 		if strings.Contains(ev.Path, "/guides/") && strings.HasSuffix(ev.Path, ".md") {
 			_ = r.Load()
 		}
 	})
-	return nil
+	return w, nil
 }
