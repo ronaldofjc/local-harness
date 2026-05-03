@@ -24,12 +24,12 @@ const (
 
 // Task representa uma task persistida.
 type Task struct {
-	ID          string      `yaml:"id" json:"id"`
-	SpecID      string      `yaml:"spec_id" json:"spec_id"`
-	Description string      `yaml:"description" json:"description"`
-	Status      TaskStatus  `yaml:"status" json:"status"`
-	Evidence    []Evidence  `yaml:"evidence" json:"evidence"`
-	CompletedAt *time.Time  `yaml:"completedAt,omitempty" json:"completedAt,omitempty"`
+	ID          string     `yaml:"id" json:"id"`
+	SpecID      string     `yaml:"spec_id" json:"spec_id"`
+	Description string     `yaml:"description" json:"description"`
+	Status      TaskStatus `yaml:"status" json:"status"`
+	Evidence    []Evidence `yaml:"evidence" json:"evidence"`
+	CompletedAt *time.Time `yaml:"completedAt,omitempty" json:"completedAt,omitempty"`
 }
 
 // Evidence representa uma evidencia anexada a uma task.
@@ -123,7 +123,10 @@ func (r *FileSystemTaskRepository) Save(task *Task) error {
 		return fmt.Errorf("mkdir tasks: %w", err)
 	}
 
-	path := filepath.Join(tasksDir, fmt.Sprintf("%s.yaml", task.ID))
+	// Remove arquivo antigo da mesma task (se existir)
+	_ = r.removeOldTaskFile(tasksDir, task.ID)
+
+	path := filepath.Join(tasksDir, r.taskFilename(task))
 	data, err := yaml.Marshal(task)
 	if err != nil {
 		return fmt.Errorf("marshal task: %w", err)
@@ -135,6 +138,67 @@ func (r *FileSystemTaskRepository) Save(task *Task) error {
 
 	r.tasks[task.ID] = task
 	return nil
+}
+
+// removeOldTaskFile remove arquivos antigos da mesma task ID.
+func (r *FileSystemTaskRepository) removeOldTaskFile(tasksDir, taskID string) error {
+	entries, err := os.ReadDir(tasksDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
+			continue
+		}
+
+		// Verifica pelo conteúdo se é a mesma task
+		path := filepath.Join(tasksDir, entry.Name())
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+
+		var t Task
+		if err := yaml.Unmarshal(data, &t); err != nil {
+			continue
+		}
+
+		if t.ID == taskID {
+			_ = os.Remove(path)
+		}
+	}
+	return nil
+}
+
+// taskFilename gera o nome do arquivo no formato YYYY-MM-DD-{index}-{id}.yaml.
+func (r *FileSystemTaskRepository) taskFilename(task *Task) string {
+	// Usa CompletedAt se disponível, senão data atual
+	date := time.Now().UTC()
+	if task.CompletedAt != nil {
+		date = *task.CompletedAt
+	}
+
+	// Conta tasks existentes para o índice do dia
+	tasksDir := filepath.Join(r.root, "contracts", "tasks")
+	datePrefix := date.Format("2006-01-02")
+	index := 1
+
+	entries, _ := os.ReadDir(tasksDir)
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".yaml") {
+			// Extrai data do filename: YYYY-MM-DD-{index}-{id}.yaml
+			parts := strings.SplitN(entry.Name(), "-", 4)
+			if len(parts) >= 3 {
+				fileDate := parts[0] + "-" + parts[1] + "-" + parts[2]
+				if fileDate == datePrefix {
+					index++
+				}
+			}
+		}
+	}
+
+	return fmt.Sprintf("%s-%d-%s.yaml", datePrefix, index, task.ID)
 }
 
 // ListBySpec lista todas as tasks de uma spec.

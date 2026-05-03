@@ -42,10 +42,10 @@ func (a *GoTestAdapter) Normalize(stdout, stderr string, exitCode int, ctx RunCo
 			pkg, _ := event["Package"].(string)
 			output, _ := event["Output"].(string)
 			v := common.Violation{
-				Severity:    common.SeverityError,
-				What:        fmt.Sprintf("Test failed: %s", test),
-				Why:         output,
-				Remediation: fmt.Sprintf("Fix test %s in package %s", test, pkg),
+				Severity:      common.SeverityError,
+				What:          fmt.Sprintf("Test failed: %s", test),
+				Why:           output,
+				Remediation:   fmt.Sprintf("Fix test %s in package %s", test, pkg),
 				FilesAffected: []string{},
 			}
 			violations = append(violations, v)

@@ -126,23 +126,6 @@ func (w *Watcher) dispatch(e Event) {
 // HarnessRoot retorna o diretorio .harness a partir da variavel de ambiente ou busca
 // o .harness mais proximo subindo na arvore de diretorios.
 func HarnessRoot() string {
-	if root := os.Getenv("HARNESS_ROOT"); root != "" {
-		return root
-	}
-	dir, err := os.Getwd()
-	if err != nil {
-		return ".harness"
-	}
-	for {
-		candidate := filepath.Join(dir, ".harness")
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	return ".harness"
+	root := os.Getenv("HARNESS_ROOT")
+	return root
 }

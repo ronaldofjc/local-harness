@@ -16,7 +16,7 @@ import (
 )
 
 func setupTestServer() *Server {
-	root := "../../.harness"
+	root := "../../examples/.harness"
 
 	guidesRepo := guides.NewFileSystemRepository(root)
 	_ = guidesRepo.Load()
@@ -200,7 +200,7 @@ func TestHandleSessionStart(t *testing.T) {
 	params, _ := json.Marshal(map[string]any{
 		"name": "session.start",
 		"arguments": map[string]any{
-			"workflow":   "PREVC",
+			"workflow":    "PREVC",
 			"contract_id": "test-spec",
 		},
 	})
@@ -223,7 +223,7 @@ func TestHandleSessionAppendAndGet(t *testing.T) {
 
 	// Start
 	startParams, _ := json.Marshal(map[string]any{
-		"name": "session.start",
+		"name":      "session.start",
 		"arguments": map[string]any{},
 	})
 	startReq := JSONRPCRequest{
@@ -376,7 +376,7 @@ func TestHandleResourcesReadWorkflow(t *testing.T) {
 // TestEndToEnd_Flow simula o ciclo completo de uso do harness:
 // sensor.run -> judge.review -> contract.task.next -> contract.task.complete
 func TestEndToEnd_Flow(t *testing.T) {
-	root := "../../.harness"
+	root := "../../examples/.harness"
 
 	// Limpa tasks de testes anteriores para garantir independencia
 	_ = os.RemoveAll(filepath.Join(root, "contracts", "tasks"))

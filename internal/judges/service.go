@@ -33,12 +33,12 @@ type ReviewInput struct {
 
 // ReviewOutput define a resposta da fase 1 (preparacao).
 type ReviewOutput struct {
-	RubricID     string                 `json:"rubric_id"`
-	Regulation   common.Regulation      `json:"regulation"`
-	Instructions string                 `json:"instructions"`
-	Schema       map[string]any `json:"schema"`
-	Context      ReviewContext          `json:"context"`
-	Submission   ReviewSubmission       `json:"submission"`
+	RubricID     string            `json:"rubric_id"`
+	Regulation   common.Regulation `json:"regulation"`
+	Instructions string            `json:"instructions"`
+	Schema       map[string]any    `json:"schema"`
+	Context      ReviewContext     `json:"context"`
+	Submission   ReviewSubmission  `json:"submission"`
 }
 
 // ReviewContext fornece contexto carregado pelo servidor.
@@ -49,7 +49,7 @@ type ReviewContext struct {
 
 // ReviewSubmission indica qual tool chamar a seguir.
 type ReviewSubmission struct {
-	Tool        string                 `json:"tool"`
+	Tool        string         `json:"tool"`
 	Correlation map[string]any `json:"correlation"`
 }
 
@@ -100,9 +100,9 @@ func (s *Service) Review(input ReviewInput) (*ReviewOutput, error) {
 
 // RecordInput define os parametros de entrada para record.
 type RecordInput struct {
-	RubricID string                 `json:"rubric_id"`
-	Target   string                 `json:"target"`
-	SpecID   string                 `json:"spec_id,omitempty"`
+	RubricID string         `json:"rubric_id"`
+	Target   string         `json:"target"`
+	SpecID   string         `json:"spec_id,omitempty"`
 	Result   map[string]any `json:"result"`
 }
 

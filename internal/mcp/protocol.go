@@ -12,23 +12,23 @@ type JSONRPCRequest struct {
 
 // JSONRPCResponse representa uma resposta JSON-RPC 2.0.
 type JSONRPCResponse struct {
-	JSONRPC string          `json:"jsonrpc"`
-	ID      any             `json:"id,omitempty"`
-	Result  any             `json:"result,omitempty"`
-	Error   *JSONRPCError   `json:"error,omitempty"`
+	JSONRPC string        `json:"jsonrpc"`
+	ID      any           `json:"id,omitempty"`
+	Result  any           `json:"result,omitempty"`
+	Error   *JSONRPCError `json:"error,omitempty"`
 }
 
 // JSONRPCError representa um erro JSON-RPC.
 type JSONRPCError struct {
-	Code    int             `json:"code"`
-	Message string          `json:"message"`
-	Data    any             `json:"data,omitempty"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
 // InitializeRequest e a primeira chamada do cliente MCP.
 type InitializeRequest struct {
-	ProtocolVersion string                 `json:"protocolVersion"`
-	Capabilities    map[string]any         `json:"capabilities"`
+	ProtocolVersion string         `json:"protocolVersion"`
+	Capabilities    map[string]any `json:"capabilities"`
 	ClientInfo      struct {
 		Name    string `json:"name"`
 		Version string `json:"version"`
@@ -37,8 +37,8 @@ type InitializeRequest struct {
 
 // InitializeResult e a resposta do servidor.
 type InitializeResult struct {
-	ProtocolVersion string                 `json:"protocolVersion"`
-	Capabilities    ServerCapabilities     `json:"capabilities"`
+	ProtocolVersion string             `json:"protocolVersion"`
+	Capabilities    ServerCapabilities `json:"capabilities"`
 	ServerInfo      struct {
 		Name    string `json:"name"`
 		Version string `json:"version"`
@@ -90,8 +90,8 @@ type ResourceContents struct {
 
 // Prompt representa um prompt MCP.
 type Prompt struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
 	Arguments   []PromptArgument `json:"arguments,omitempty"`
 }
 
@@ -103,6 +103,6 @@ type PromptArgument struct {
 
 // PromptMessage representa uma mensagem de prompt.
 type PromptMessage struct {
-	Role    string      `json:"role"`
-	Content any             `json:"content"`
+	Role    string `json:"role"`
+	Content any    `json:"content"`
 }

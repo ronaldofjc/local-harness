@@ -31,21 +31,21 @@ type Violation struct {
 
 // SensorOutput e o envelope normalizado de saida de qualquer sensor ou judge (SPEC §9).
 type SensorOutput struct {
-	Tool             string      `json:"tool"`
-	Regulation       Regulation  `json:"regulation"`
-	Passed           bool        `json:"passed"`
-	Summary          string      `json:"summary"`
-	Inconclusive     bool        `json:"inconclusive"`
-	InconclusiveReason string    `json:"inconclusiveReason,omitempty"`
-	Violations       []Violation `json:"violations"`
+	Tool               string      `json:"tool"`
+	Regulation         Regulation  `json:"regulation"`
+	Passed             bool        `json:"passed"`
+	Summary            string      `json:"summary"`
+	Inconclusive       bool        `json:"inconclusive"`
+	InconclusiveReason string      `json:"inconclusiveReason,omitempty"`
+	Violations         []Violation `json:"violations"`
 }
 
 // SensorKind classifica o tipo de sensor.
 type SensorKind string
 
 const (
-	SensorKindLinter    SensorKind = "linter"
-	SensorKindTypeCheck SensorKind = "type-check"
+	SensorKindLinter     SensorKind = "linter"
+	SensorKindTypeCheck  SensorKind = "type-check"
 	SensorKindStructural SensorKind = "structural"
-	SensorKindCustom    SensorKind = "custom"
+	SensorKindCustom     SensorKind = "custom"
 )

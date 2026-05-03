@@ -15,13 +15,13 @@ import (
 
 // Sensor representa um sensor registrado.
 type Sensor struct {
-	ID          string             `yaml:"id"`
-	Kind        common.SensorKind  `yaml:"kind"`
-	Regulation  common.Regulation  `yaml:"regulation"`
-	Command     string             `yaml:"command"`
-	Adapter     string             `yaml:"adapter"`
-	Description string             `yaml:"description"`
-	Defaults    map[string]string  `yaml:"defaults,omitempty"`
+	ID          string            `yaml:"id"`
+	Kind        common.SensorKind `yaml:"kind"`
+	Regulation  common.Regulation `yaml:"regulation"`
+	Command     string            `yaml:"command"`
+	Adapter     string            `yaml:"adapter"`
+	Description string            `yaml:"description"`
+	Defaults    map[string]string `yaml:"defaults,omitempty"`
 }
 
 // Repository define a interface para acesso a sensors.

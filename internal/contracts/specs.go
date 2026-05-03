@@ -15,11 +15,11 @@ import (
 
 // Spec representa uma especificacao comportamental.
 type Spec struct {
-	ID                 string            `yaml:"id"`
-	Title              string            `yaml:"title"`
-	AcceptanceCriteria []string          `yaml:"acceptanceCriteria"`
-	Checks             []Check           `yaml:"checks"`
-	Tasks              []SpecTask        `yaml:"tasks"`
+	ID                 string     `yaml:"id"`
+	Title              string     `yaml:"title"`
+	AcceptanceCriteria []string   `yaml:"acceptanceCriteria"`
+	Checks             []Check    `yaml:"checks"`
+	Tasks              []SpecTask `yaml:"tasks"`
 }
 
 // Check define um sensor ou judge a ser executado na validacao.

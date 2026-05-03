@@ -15,9 +15,9 @@ type SensorRunner interface {
 
 // Service orquestra operacoes de contracts.
 type Service struct {
-	specRepo   SpecRepository
-	taskRepo   TaskRepository
-	sensorSvc  *sensors.Service
+	specRepo  SpecRepository
+	taskRepo  TaskRepository
+	sensorSvc *sensors.Service
 }
 
 // NewService cria um novo service de contracts.
@@ -31,7 +31,7 @@ func NewService(specRepo SpecRepository, taskRepo TaskRepository, sensorSvc *sen
 
 // ValidateInput define os parametros de entrada para spec.validate.
 type ValidateInput struct {
-	ID      string `json:"id"`
+	ID       string `json:"id"`
 	Artifact string `json:"artifact"`
 }
 

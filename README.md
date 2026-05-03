@@ -1,42 +1,60 @@
 # local-harness
 
-Servidor MCP em Go inspirado no [`anyharness`](https://github.com/vinilana/anyharness) para expor o harness de desenvolvimento como protocolo unico e agnostico ao cliente de IA.
+Servidor MCP em Go que expõe o harness de desenvolvimento como protocolo único e agnóstico ao cliente de IA.
+
+## Descrição
+
+O **local-harness** é um servidor [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) que unifica guides, sensors, judges, contracts, sessions e steering loop em uma única surface de protocolo. Ele permite que qualquer agente de IA — seja Cursor, OpenCode, Claude Code, Codex ou outro cliente MCP — descubra, execute e valide o harness de qualidade do seu projeto de forma padronizada.
+
+O servidor opera no modelo **file-system first**: todas as definições (sensores, rubricas, specs, workflows) são arquivos no diretório `.harness/` do seu workspace, sem necessidade de banco de dados ou serviços externos.
 
 ## Objetivo
 
-Consolidar guides, sensors, judges, contracts, sessions e steering loop em uma unica surface MCP, acessivel por Cursor, OpenCode, Claude Code, Codex ou qualquer agente compativel com MCP.
+Consolidar o harness de desenvolvimento em uma surface MCP única, acessível por qualquer agente compatível, garantindo:
+
+- **Descoberta automática** de regras, checks e workflows via filesystem
+- **Execução normalizada** de sensores (testes, lint, benchmarks, validação arquitetural)
+- **Avaliação estruturada** via judges com rubricas e schemas JSON
+- **Rastreabilidade completa** através de sessions append-only
+- **Evolução contínua** do harness via steering loop baseado em violações
 
 ## Stack
 
 - Go 1.26
 - Transporte stdio (exclusivo no MVP)
-- Sem chamadas a LLM no servidor
+- Sem chamadas a LLM no servidor (inferência 100% no cliente MCP)
+- File-system first (sem banco de dados)
 
 ## Estrutura
 
 ```
-cmd/mcp/              # entrypoint
+cmd/mcp/              # Entrypoint do servidor MCP (stdio)
 internal/
-  mcp/                # protocolo JSON-RPC + MCP
-  harness/fs/         # abstracao de .harness/ + fsnotify watcher
-  guides/             # resources de guides (rules/, skills/, subagents/)
-  sensors/            # tools sensor.* + adapters built-in
-  judges/             # tools judge.* (review + record)
-  contracts/          # tools contract.* (specs + tasks)
-  sessions/           # tools session.*
-  steering/           # tool harness.steer.suggest
-  workflows/          # prompts MCP (workflow.{id})
-  common/             # tipos e erros compartilhados
-.harness/             # harness de exemplo
+  mcp/                # Protocolo JSON-RPC + implementação MCP
+  harness/fs/         # Abstração de .harness/ + watcher fsnotify
+  guides/             # Resources de guides (rules/, skills/, subagents/)
+  sensors/            # Tools sensor.* + adapters built-in para normalização
+  judges/             # Tools judge.* (review fase 1 + record fase 2)
+  contracts/          # Tools contract.* (specs + tasks orchestration)
+  sessions/           # Tools session.* (append-only jsonl)
+  steering/           # Tool harness.steer.suggest (heurísticas de evolução)
+  workflows/          # Prompts MCP (workflow.{id}) + loader de .md
+  common/             # Tipos, erros e utilitários compartilhados
+examples/
+  .harness/           # Harness de exemplo completo (sensores, workflows, etc.)
 ```
 
-## Instalacao
+## Instalação
+
+### Via go install
 
 ```bash
 go install github.com/ronaldofjc/local-harness/cmd/mcp@latest
 ```
 
-Ou clone e build local:
+> **Nota:** Certifique-se de que seu `$GOPATH/bin` ou `$GOBIN` esteja no `PATH`.
+
+### Build local
 
 ```bash
 git clone https://github.com/ronaldofjc/local-harness.git
@@ -44,7 +62,15 @@ cd local-harness
 go build -o mcp ./cmd/mcp
 ```
 
-## Configuracao
+### Verificação
+
+```bash
+./mcp --version  # ou simplesmente mcp, se instalado via go install
+```
+
+## Configuração
+
+O `local-harness` pode ser utilizado em **qualquer ferramenta de IA compatível com MCP** (Cursor, OpenCode, Claude Code, Codex, etc.). A única configuração obrigatória é a variável de ambiente `HARNESS_ROOT`, que deve apontar para o diretório `.harness/` do seu workspace.
 
 ### Cursor
 
@@ -53,10 +79,10 @@ Crie ou edite `.cursor/mcp.json` na raiz do projeto:
 ```json
 {
   "mcpServers": {
-    "go-harness": {
-      "command": "mcp",
+    "local-harness": {
+      "command": "/caminho/para/mcp",
       "env": {
-        "HARNESS_ROOT": ".harness"
+        "HARNESS_ROOT": "/caminho/do/workspace/.harness"
       }
     }
   }
@@ -71,104 +97,145 @@ Adicione ao `opencode.json`:
 {
   "mcp_servers": [
     {
-      "name": "go-harness",
-      "command": "mcp",
+      "name": "local-harness",
+      "command": "/caminho/para/mcp",
       "env": {
-        "HARNESS_ROOT": ".harness"
+        "HARNESS_ROOT": "/caminho/do/workspace/.harness"
       }
     }
   ]
 }
 ```
 
+### Claude Code
+
+Adicione ao arquivo de configuração do Claude Code (`~/.claude/settings.json` ou equivalente):
+
+```json
+{
+  "mcpServers": {
+    "local-harness": {
+      "command": "/caminho/para/mcp",
+      "env": {
+        "HARNESS_ROOT": "/caminho/do/workspace/.harness"
+      }
+    }
+  }
+}
+```
+
+> **Dica:** Use o caminho absoluto para o binário `mcp` e para `HARNESS_ROOT` para evitar problemas de resolução de PATH.
+
 ## Uso
 
-1. Crie a pasta `.harness/` na raiz do projeto (veja o exemplo em `.harness/` deste repo).
-2. Registre o servidor no seu cliente MCP.
-3. Use as tools MCP para descobrir e executar o harness.
+1. **Crie a pasta `.harness/`** na raiz do seu projeto (veja o exemplo em `examples/.harness/` deste repositório).
+2. **Registre o servidor MCP** no seu cliente de IA conforme a seção de Configuração.
+3. **Use as tools MCP** para descobrir e executar o harness.
 
-## Tools MCP Disponiveis
+### Estrutura mínima do `.harness/`
+
+```
+.harness/
+├── sensors/          # Arquivos YAML com definição de sensores
+├── judges/           # Arquivos YAML com rubricas de avaliação
+├── contracts/        # Arquivos YAML com specs e tasks
+├── workflows/        # Arquivos Markdown com workflows
+└── guides/           # Arquivos Markdown com guides (rules, skills, subagents)
+```
+
+## Tools MCP Disponíveis
 
 ### Sensors
 
-- `sensor.list` — lista sensores com filtros por `kind` e `regulation`
-- `sensor.run` — executa um sensor pelo ID
-- `sensor.register` — adiciona/atualiza um sensor
+| Tool | Descrição |
+|------|-----------|
+| `sensor.list` | Lista sensores registrados com filtros opcionais por `kind` e `regulation` |
+| `sensor.run` | Executa um sensor pelo ID e retorna output normalizado |
+| `sensor.register` | Adiciona ou atualiza um sensor em `.harness/sensors/` |
 
 ### Judges
 
-- `judge.list` — lista rubrics disponiveis
-- `judge.review` — renderiza prompt+schema+contexto (fase 1, sem LLM no servidor)
-- `judge.record` — recebe verdict do cliente, valida pelo schema, retorna envelope normalizado
+| Tool | Descrição |
+|------|-----------|
+| `judge.list` | Lista rubrics de judges disponíveis |
+| `judge.review` | Renderiza prompt + schema + contexto para avaliação (fase 1, sem LLM no servidor) |
+| `judge.record` | Recebe verdict do cliente, valida pelo schema e retorna envelope normalizado (fase 2) |
 
 ### Contracts
 
-- `contract.spec.validate` — orquestra checks (sensors inline + judges pendentes)
-- `contract.task.next` — retorna proxima task pendente da spec
-- `contract.task.complete` — marca task como completed com evidencias
+| Tool | Descrição |
+|------|-----------|
+| `contract.spec.validate` | Valida uma spec contra um artefato, orquestrando sensors e judges |
+| `contract.task.next` | Retorna a próxima task pendente de uma spec |
+| `contract.task.complete` | Marca uma task como completed com evidências |
 
 ### Sessions
 
-- `session.start` — inicia uma nova sessao append-only
-- `session.append` — adiciona um evento a uma sessao
-- `session.get` — le header e eventos de uma sessao
+| Tool | Descrição |
+|------|-----------|
+| `session.start` | Inicia uma nova sessão append-only em `.harness/.local/sessions/`. Reutiliza a sessão ativa da janela de execução, a menos que `force_new` seja `true` |
+| `session.append` | Adiciona um evento a uma sessão existente |
+| `session.get` | Lê o cabeçalho e todos os eventos de uma sessão |
 
 ### Steering
 
-- `harness.steer.suggest` — analisa o steering log e sugere novos guides
+| Tool | Descrição |
+|------|-----------|
+| `harness.steer.suggest` | Analisa o steering log e sugere novos guides baseado em padrões de violations |
 
 ### Resources
 
-- `harness://guides/{kind}/{id}` — guides (kind: rules, skills, subagents)
-- `harness://workflows/{id}` — workflows (fallback)
+- `harness://guides/{kind}/{id}` — Guides organizados por kind (ex: `rules`, `skills`, `subagents`)
+- `harness://workflows/{id}` — Workflows como fallback resources
 
 ### Prompts
 
-Os workflows em `.harness/workflows/*.md` sao expostos como prompts MCP com prefixo `workflow.`:
-- `workflow.PREVC` — Plan, Research, Execute, Verify, Commit
-- `workflow.bug-fix` — investigacao → reproduzir → fix → spec/regression → completar
+Os workflows em `.harness/workflows/*.md` são expostos como prompts MCP com prefixo `workflow.`:
 
-Tambem disponiveis como resources em `harness://workflows/{id}`.
+- `workflow.PREVC` — Plan, Research, Execute, Verify, Commit
+- `workflow.bug-fix` — investigação → reproduzir → fix → spec/regression → completar
 
 ## Sensores Built-in
 
-| ID | Comando | Adapter | Regulacao |
+| ID | Comando | Adapter | Regulação |
 |----|---------|---------|-----------|
-| `go-test` | `go test -json ./...` | go-test | maintainability |
-| `staticcheck` | `staticcheck ./...` | staticcheck | maintainability |
-| `govet` | `go vet ./...` | govet | maintainability |
-| `gofmt` | `gofmt -l .` | gofmt | maintainability |
-| `go-bench` | `go test -bench=. -benchmem ./...` | go-bench | performance |
-| `dep-cruiser` | comando custom com ARCH_CHECK | dep-cruiser | architecture |
-| `task-harness` | `task --taskfile harness/Taskfile.yml test` | task-harness | fitness |
+| `go-test` | `go test -json ./...` | `go-test` | maintainability |
+| `staticcheck` | `staticcheck ./...` | `staticcheck` | maintainability |
+| `govet` | `go vet ./...` | `govet` | maintainability |
+| `gofmt` | `gofmt -l .` | `gofmt` | maintainability |
+| `go-bench` | `go test -bench=. -benchmem ./...` | `go-bench` | performance |
+| `dep-cruiser` | comando custom com `ARCH_CHECK` | `dep-cruiser` | architecture |
+| `task-harness` | `task --taskfile harness/Taskfile.yml test` | `task-harness` | fitness |
 
-### Adapters Disponiveis
+### Adapters Disponíveis
 
-- `go-test` — parseia `go test -json` (pass/fail/skip)
-- `staticcheck` — parseia output do staticcheck (SAxxxx)
-- `govet` — parseia output do `go vet`
-- `gofmt` — detecta arquivos nao formatados
-- `go-bench` — parseia benchmarks Go
-- `dep-cruiser` — detecta violacoes arquiteturais (handler→repository)
-- `task-harness` — executa tasks do Taskfile
-- `passthrough` — repassa output cru sem normalizacao
+| Adapter | Descrição |
+|---------|-----------|
+| `go-test` | Parseia `go test -json` (pass/fail/skip) |
+| `staticcheck` | Parseia output do staticcheck (SAxxxx) |
+| `govet` | Parseia output do `go vet` |
+| `gofmt` | Detecta arquivos não formatados |
+| `go-bench` | Parseia benchmarks Go |
+| `dep-cruiser` | Detecta violações arquiteturais (ex: handler → repository direto) |
+| `task-harness` | Executa tasks de um Taskfile |
+| `passthrough` | Repassa output cru sem normalização |
 
-## Workflows Disponiveis
+## Workflows Disponíveis
 
-Workflows em `.harness/workflows/*.md` sao expostos como prompts MCP com prefixo `workflow.`:
+Os workflows em `.harness/workflows/*.md` são expostos como prompts MCP e também como resources:
 
-```
-workflow.PREVC     — Plan, Research, Execute, Verify, Commit
-workflow.bug-fix   — investigacao → reproduzir → fix → spec/regression → completar
-```
+| Prompt | Descrição |
+|--------|-----------|
+| `workflow.PREVC` | Plan, Research, Execute, Verify, Commit |
+| `workflow.bug-fix` | investigação → reproduzir → fix → spec/regression → completar |
 
-Tambem disponiveis como resources em `harness://workflows/{id}`.
+### Exemplo de Spec (Contract)
 
 ```yaml
 id: example-feature
 title: Feature example
 acceptanceCriteria:
-  - O codigo deve compilar
+  - O código deve compilar
   - Os testes devem passar
 checks:
   - kind: sensor
@@ -196,27 +263,27 @@ Eventos em `.harness/.local/sessions/*.jsonl`:
 ## Fluxo End-to-End
 
 ```
-# 1. Descobrir sensores
+# 1. Descobrir sensores disponíveis
 sensor.list
 
-# 2. Rodar sensor
+# 2. Executar sensor de qualidade
 sensor.run({ id: "gofmt", target: "." })
 
 # 3. Preparar judge review
 judge.review({ rubric_id: "spec-adherence", target: "internal/foo" })
 
-# 4. Iniciar sessao
+# 4. Iniciar sessão rastreável
 session.start({ workflow: "PREVC", contract_id: "example-feature" })
 
-# 5. Pegar proxima task
+# 5. Identificar próxima task
 contract.task.next({ spec_id: "example-feature" })
 
-# 6. Completar task com evidencias
+# 6. Completar task com evidências
 contract.task.complete({
   task_id: "implement-handler",
   evidence: [
     { kind: "sensor_run", sensor: "gofmt", passed: true },
-    { kind: "note", text: "Review concluida" }
+    { kind: "note", text: "Review concluída" }
   ]
 })
 
@@ -232,12 +299,12 @@ go test ./...
 
 ## Roadmap
 
-- [x] Fase 0: Protocolo MCP basico
-- [x] Fase 1: Guides e Sensors
-- [x] Fase 2: Judges e Contracts
-- [x] Fase 3: Sessions, Steering e Workflows
-- [x] Fase 4: Integracao e Dogfooding
+- [x] Fase 0: Protocolo MCP básico (stdio, initialize, tools/list, resources/list)
+- [x] Fase 1: Guides e Sensors (fsnotify watcher, 5+ adapters built-in, tools sensor.*)
+- [x] Fase 2: Judges e Contracts (JSON Schema validator, rubric loader, spec/task orchestration)
+- [x] Fase 3: Sessions, Steering Loop e Workflows
+- [x] Fase 4: Integração e Dogfooding
 
-## Licenca
+## Licença
 
 MIT

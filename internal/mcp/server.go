@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ronaldofjc/local-harness/internal/common"
 	"github.com/ronaldofjc/local-harness/internal/contracts"
@@ -191,6 +192,20 @@ func (s *Server) handleToolsCall(req JSONRPCRequest) JSONRPCResponse {
 		return errorResponse(req.ID, -32700, "parse error")
 	}
 
+	// Log de tool_call no steering com session_id
+	activeSessionID := s.sessionsService.ActiveSessionID()
+	if s.steeringService != nil {
+		var argsMap map[string]any
+		_ = json.Unmarshal(call.Arguments, &argsMap)
+		_ = s.steeringService.Log().Append(steering.Event{
+			Timestamp: time.Now().UTC(),
+			SessionID: activeSessionID,
+			Source:    "tool_call",
+			Tool:      call.Name,
+			Args:      argsMap,
+		})
+	}
+
 	switch call.Name {
 	// Sensors
 	case "sensor.list":
@@ -279,14 +294,36 @@ func (s *Server) handleSensorRun(id any, args json.RawMessage) JSONRPCResponse {
 		return errorResponse(id, -32603, err.Error())
 	}
 
-	// Loga no steering log
+	activeSessionID := s.sessionsService.ActiveSessionID()
+
+	// Loga no steering log com rastreabilidade
 	if s.steeringService != nil {
 		_ = s.steeringService.Log().Append(steering.Event{
+			Timestamp:  time.Now().UTC(),
+			SessionID:  activeSessionID,
 			Source:     "sensor",
 			Tool:       input.ID,
 			Regulation: output.Regulation,
 			Passed:     output.Passed,
 			Violations: output.Violations,
+		})
+	}
+
+	// Auto-append na sessão ativa
+	if activeSessionID != "" {
+		payload, _ := json.Marshal(map[string]any{
+			"sensor":     input.ID,
+			"passed":     output.Passed,
+			"regulation": output.Regulation,
+		})
+		eventData, _ := json.Marshal(sessions.SessionEvent{
+			Type:      "sensor_run",
+			Timestamp: time.Now().UTC(),
+			Payload:   payload,
+		})
+		_, _ = s.sessionsService.Append(sessions.AppendInput{
+			SessionID: activeSessionID,
+			Event:     eventData,
 		})
 	}
 
@@ -380,14 +417,37 @@ func (s *Server) handleJudgeRecord(id any, args json.RawMessage) JSONRPCResponse
 		return errorResponse(id, -32603, err.Error())
 	}
 
-	// Loga no steering log
+	activeSessionID := s.sessionsService.ActiveSessionID()
+
+	// Loga no steering log com rastreabilidade
 	if s.steeringService != nil {
 		_ = s.steeringService.Log().Append(steering.Event{
+			Timestamp:  time.Now().UTC(),
+			SessionID:  activeSessionID,
+			SpecID:     input.SpecID,
 			Source:     "judge",
 			Tool:       input.RubricID,
 			Regulation: output.Regulation,
 			Passed:     output.Passed,
 			Violations: output.Violations,
+		})
+	}
+
+	// Auto-append na sessão ativa
+	if activeSessionID != "" {
+		payload, _ := json.Marshal(map[string]any{
+			"rubric":  input.RubricID,
+			"passed":  output.Passed,
+			"spec_id": input.SpecID,
+		})
+		eventData, _ := json.Marshal(sessions.SessionEvent{
+			Type:      "judge_review",
+			Timestamp: time.Now().UTC(),
+			Payload:   payload,
+		})
+		_, _ = s.sessionsService.Append(sessions.AppendInput{
+			SessionID: activeSessionID,
+			Event:     eventData,
 		})
 	}
 

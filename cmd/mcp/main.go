@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/ronaldofjc/local-harness/internal/contracts"
-	harnessfs "github.com/ronaldofjc/local-harness/internal/harness/fs"
 	"github.com/ronaldofjc/local-harness/internal/guides"
+	harnessfs "github.com/ronaldofjc/local-harness/internal/harness/fs"
 	"github.com/ronaldofjc/local-harness/internal/judges"
 	"github.com/ronaldofjc/local-harness/internal/mcp"
 	"github.com/ronaldofjc/local-harness/internal/sensors"
@@ -21,6 +21,23 @@ const version = "0.1.0"
 
 func main() {
 	root := harnessfs.HarnessRoot()
+	if root == "" {
+		fmt.Fprintf(os.Stderr,
+			"ERRO: HARNESS_ROOT nao configurado.\n"+
+				"\n"+
+				"Defina a variavel de ambiente HARNESS_ROOT apontando para\n"+
+				"o diretorio .harness do seu workspace.\n"+
+				"\n"+
+				"Exemplo no opencode.json:\n"+
+				"  \"env\": {\"HARNESS_ROOT\": \"/caminho/do/workspace/.harness\"}\n"+
+				"\n"+
+				"Exemplo no .cursor/mcp.json:\n"+
+				"  \"env\": {\"HARNESS_ROOT\": \"/caminho/do/workspace/.harness\"}\n"+
+				"\n"+
+				"Exemplo na shell:\n"+
+				"  export HARNESS_ROOT=/caminho/do/workspace/.harness\n")
+		os.Exit(1)
+	}
 
 	// Inicializa repositorios
 	guidesRepo := guides.NewFileSystemRepository(root)

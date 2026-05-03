@@ -13,12 +13,16 @@ import (
 
 // Event representa um evento no steering log.
 type Event struct {
-	Timestamp  time.Time            `json:"timestamp"`
-	Source     string               `json:"source"` // sensor | judge | contract
-	Tool       string               `json:"tool"`
-	Regulation common.Regulation    `json:"regulation"`
-	Passed     bool                 `json:"passed"`
-	Violations []common.Violation   `json:"violations,omitempty"`
+	Timestamp  time.Time          `json:"timestamp"`
+	SessionID  string             `json:"session_id,omitempty"`
+	TaskID     string             `json:"task_id,omitempty"`
+	SpecID     string             `json:"spec_id,omitempty"`
+	Source     string             `json:"source"` // sensor | judge | contract | tool_call
+	Tool       string             `json:"tool"`
+	Regulation common.Regulation  `json:"regulation,omitempty"`
+	Passed     bool               `json:"passed,omitempty"`
+	Violations []common.Violation `json:"violations,omitempty"`
+	Args       map[string]any     `json:"args,omitempty"`
 }
 
 // Log gerencia o steering log append-only.

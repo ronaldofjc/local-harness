@@ -123,6 +123,13 @@ type GetOutput struct {
 	Events []SessionEvent `json:"events"`
 }
 
+// ActiveSessionID retorna a sessão ativa atual (se houver).
+func (s *Service) ActiveSessionID() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.activeSessionID
+}
+
 // Get lê uma sessão completa.
 func (s *Service) Get(input GetInput) (*GetOutput, error) {
 	header, events, err := s.store.Get(input.SessionID)
